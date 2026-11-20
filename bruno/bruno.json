@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "FAPI 2.0 Server-to-Server (M2M)",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

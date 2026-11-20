@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #090d16;
+    color: #e2e8f0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    padding: 30px 40px;
+    width: 1400px;
+    height: 920px;
+    overflow: hidden;
+    position: relative;
+    background-image: 
+      radial-gradient(circle at 15% 15%, rgba(56, 189, 248, 0.09) 0%, transparent 45%),
+      radial-gradient(circle at 85% 15%, rgba(168, 85, 247, 0.09) 0%, transparent 45%),
+      radial-gradient(circle at 50% 85%, rgba(16, 185, 129, 0.09) 0%, transparent 45%),
+      linear-gradient(to right, rgba(255,255,255,0.02) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 100% 100%, 32px 32px, 32px 32px;
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .title-group h1 {
+    font-size: 25px;
+    font-weight: 800;
+    letter-spacing: -0.4px;
+    background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .title-group p {
+    font-size: 13px;
+    color: #94a3b8;
+    margin-top: 3px;
+  }
+  .badges {
+    display: flex;
+    gap: 8px;
+  }
+  .badge {
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .badge-cyan { background: rgba(56, 189, 248, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.35); }
+  .badge-purple { background: rgba(168, 85, 247, 0.12); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.35); }
+  .badge-green { background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.35); }
+
+  /* Canvas Layout */
+  .canvas {
+    position: relative;
+    width: 1320px;
+    height: 780px;
+  }
+
+  /* Node Cards */
+  .card {
+    position: absolute;
+    border-radius: 14px;
+    padding: 18px 22px;
+    background: rgba(15, 23, 42, 0.90);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.55);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .card-erp {
+    top: 15px;
+    left: 20px;
+    width: 390px;
+    border-color: rgba(56, 189, 248, 0.4);
+    box-shadow: 0 0 30px rgba(56, 189, 248, 0.08);
+  }
+  .card-as {
+    top: 15px;
+    right: 20px;
+    width: 410px;
+    border-color: rgba(168, 85, 247, 0.4);
+    box-shadow: 0 0 30px rgba(168, 85, 247, 0.08);
+  }
+  .card-bank {
+    top: 475px;
+    left: 20px;
+    width: 1280px;
+    border-color: rgba(16, 185, 129, 0.4);
+    box-shadow: 0 0 30px rgba(16, 185, 129, 0.08);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .icon-box {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .ib-cyan { background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.35); color: #38bdf8; }
+  .ib-purple { background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.35); color: #c084fc; }
+  .ib-green { background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.35); color: #34d399; }
+
+  .card-title {
+    font-size: 15.5px;
+    font-weight: 700;
+    color: #f8fafc;
+  }
+  .card-subtitle {
+    font-size: 11.5px;
+    color: #94a3b8;
+    margin-top: 1px;
+  }
+
+  .card-body {
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .code-tag {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    background: rgba(0, 0, 0, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 1px 5px;
+    border-radius: 4px;
+    color: #38bdf8;
+    font-size: 11px;
+  }
+  .tag-purple { color: #c084fc; border-color: rgba(168,85,247,0.3); }
+  .tag-green { color: #34d399; border-color: rgba(16,185,129,0.3); }
+  .tag-amber { color: #fbbf24; border-color: rgba(245,158,11,0.3); }
+
+  .spec-list {
+    list-style: none;
+    margin-top: 8px;
+  }
+  .spec-list li {
+    margin-bottom: 6px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    color: #cbd5e1;
+    font-size: 11.5px;
+  }
+  .bullet {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-top: 5px;
+    flex-shrink: 0;
+  }
+  .b-cyan { background: #38bdf8; box-shadow: 0 0 6px #38bdf8; }
+  .b-purple { background: #c084fc; box-shadow: 0 0 6px #c084fc; }
+  .b-green { background: #34d399; box-shadow: 0 0 6px #34d399; }
+
+  /* Bank columns */
+  .bank-layout {
+    display: grid;
+    grid-template-columns: 1.15fr 1.25fr 1.1fr;
+    gap: 16px;
+    margin-top: 8px;
+  }
+  .bank-col {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    padding: 12px 14px;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .bank-col-title {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* Flow callout banners */
+  .flow-banner {
+    position: absolute;
+    background: rgba(15, 23, 42, 0.96);
+    border-radius: 10px;
+    padding: 12px 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+    font-size: 11.5px;
+    z-index: 10;
+  }
+  .flow-1 {
+    top: 30px;
+    left: 435px;
+    width: 430px;
+    border: 1px solid rgba(56, 189, 248, 0.45);
+  }
+  .flow-1-return {
+    top: 150px;
+    left: 435px;
+    width: 430px;
+    border: 1px solid rgba(168, 85, 247, 0.45);
+  }
+  .flow-2 {
+    top: 315px;
+    left: 175px;
+    width: 820px;
+    border: 1px solid rgba(16, 185, 129, 0.5);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .flow-header {
+    font-weight: 700;
+    font-size: 12px;
+    margin-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .fh-1 { color: #38bdf8; }
+  .fh-1r { color: #c084fc; }
+  .fh-2 { color: #34d399; font-size: 13px; }
+
+  /* SVG overlay for connectors */
+  svg.connectors {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .threat-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    border-radius: 4px;
+    color: #f87171;
+    font-size: 11px;
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="title-group">
+      <h1>FAPI 2.0 Security Profile — Server-to-Server (M2M) Architecture</h1>
+      <p>Autonomous Machine-to-Machine Authorization with Cryptographic Proof-of-Possession & Sender Constraining</p>
+    </div>
+    <div class="badges">
+      <span class="badge badge-cyan">RFC 7523 (private_key_jwt)</span>
+      <span class="badge badge-purple">RFC 9449 (DPoP)</span>
+      <span class="badge badge-green">RFC 7638 (JWK Thumbprint)</span>
+    </div>
+  </div>
+
+  <div class="canvas">
+    <!-- SVG CONNECTORS -->
+    <svg class="connectors" viewBox="0 0 1320 780">
+      <defs>
+        <marker id="arrow-cyan" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 1 L 8 5 L 0 9 z" fill="#38bdf8"/>
+        </marker>
+        <marker id="arrow-purple" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 1 L 8 5 L 0 9 z" fill="#c084fc"/>
+        </marker>
+        <marker id="arrow-green" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 1 L 8 5 L 0 9 z" fill="#34d399"/>
+        </marker>
+        <linearGradient id="grad-cyan" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#38bdf8"/>
+          <stop offset="100%" stop-color="#818cf8"/>
+        </linearGradient>
+        <linearGradient id="grad-purple" x1="100%" y1="0%" x2="0%" y2="0%">
+          <stop offset="0%" stop-color="#c084fc"/>
+          <stop offset="100%" stop-color="#818cf8"/>
+        </linearGradient>
+        <linearGradient id="grad-green" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#38bdf8"/>
+          <stop offset="100%" stop-color="#34d399"/>
+        </linearGradient>
+      </defs>
+
+      <!-- Path 1: ERP to AS (Top line) -->
+      <path d="M 410 70 L 880 70" stroke="url(#grad-cyan)" stroke-width="2.5" fill="none" stroke-dasharray="6,4" marker-end="url(#arrow-cyan)"/>
+
+      <!-- Path 1 Return: AS to ERP (Bottom line) -->
+      <path d="M 890 190 L 420 190" stroke="url(#grad-purple)" stroke-width="2.5" fill="none" stroke-dasharray="6,4" marker-end="url(#arrow-purple)"/>
+
+      <!-- Path 2: ERP to Flow 2 banner -->
+      <path d="M 120 280 L 120 360 L 170 360" stroke="url(#grad-green)" stroke-width="2.5" fill="none" marker-end="url(#arrow-green)"/>
+
+      <!-- Path 2 Cont: Flow 2 banner to Bank Gateway -->
+      <path d="M 585 415 L 585 470" stroke="#34d399" stroke-width="2.5" fill="none" marker-end="url(#arrow-green)"/>
+    </svg>
+
+    <!-- CARD 1: ERP SYSTEM (M2M CLIENT) -->
+    <div class="card card-erp">
+      <div class="card-header">
+        <div class="icon-box ib-cyan">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><path d="M9 22v-4h6v4"></path><path d="M8 6h.01"></path><path d="M16 6h.01"></path><path d="M8 10h.01"></path><path d="M16 10h.01"></path><path d="M8 14h.01"></path><path d="M16 14h.01"></path></svg>
+        </div>
+        <div>
+          <div class="card-title">Corporate ERP System (M2M)</div>
+          <div class="card-subtitle">Acme Corp Backend • Client ID: <span class="code-tag">erp-acme-corp-001</span></div>
+        </div>
+      </div>
+      <div class="card-body">
+        <p style="color: #94a3b8; margin-bottom: 6px;">Autonomous backend system initiating enterprise banking workflows without user interaction.</p>
+        <ul class="spec-list">
+          <li>
+            <span class="bullet b-cyan"></span>
+            <div><strong>Client Auth Key (X.509 / EC P-256)</strong>: Signs RFC 7523 assertions with certificate chain (<span class="code-tag">x5c</span>).</div>
+          </li>
+          <li>
+            <span class="bullet b-cyan"></span>
+            <div><strong>DPoP Private Key (EC P-256)</strong>: Signs ephemeral proof-of-possession JWTs with embedded public coordinates (<span class="code-tag">jwk</span>).</div>
+          </li>
+          <li>
+            <span class="bullet b-cyan"></span>
+            <div><strong>Automatic Nonce Negotiation</strong>: Handles <span class="code-tag tag-amber">400 use_dpop_nonce</span> challenges seamlessly.</div>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- FLOW 1 BANNER -->
+    <div class="flow-banner flow-1">
+      <div class="flow-header">
+        <span class="fh-1">1. POST /oauth/token (grant_type: client_credentials)</span>
+        <span class="code-tag">TLS 1.3</span>
+      </div>
+      <div style="color: #cbd5e1; font-size: 11px; line-height: 1.5;">
+        • <strong>client_assertion</strong>: ES256 JWT signed with corporate private key & X.509 cert<br>
+        • <strong>DPoP Header</strong>: Proof JWT with public JWK, <span class="code-tag">htm: POST</span>, <span class="code-tag">htu: /oauth/token</span>
+      </div>
+    </div>
+
+    <!-- FLOW 1 RETURN BANNER -->
+    <div class="flow-banner flow-1-return">
+      <div class="flow-header">
+        <span class="fh-1r">HTTP 200 OK — Sender-Constrained Token</span>
+        <span class="code-tag tag-purple">token_type: DPoP</span>
+      </div>
+      <div style="color: #cbd5e1; font-size: 11px; line-height: 1.5;">
+        • Issues Access Token cryptographically locked to client's key thumbprint:<br>
+        <span class="code-tag tag-purple">cnf: { jkt: "sha256(jwk)" }</span> • Stored securely in backend memory.
+      </div>
+    </div>
+
+    <!-- CARD 2: AUTHORIZATION SERVER -->
+    <div class="card card-as">
+      <div class="card-header">
+        <div class="icon-box ib-purple">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+        </div>
+        <div>
+          <div class="card-title">Corporate Authorization Server</div>
+          <div class="card-subtitle">Identity Provider (IdP) • Headless M2M Gateway</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <p style="color: #94a3b8; margin-bottom: 6px;">Authenticates corporate services and mints mathematically bound access tokens.</p>
+        <ul class="spec-list">
+          <li>
+            <span class="bullet b-purple"></span>
+            <div><strong>Zero Shared Secrets</strong>: Validates client via registered X.509 Certificate or pre-shared JWKS.</div>
+          </li>
+          <li>
+            <span class="bullet b-purple"></span>
+            <div><strong>DPoP Proof Binding</strong>: Extracts client JWK, verifies signature, computes SHA-256 thumbprint (<span class="code-tag tag-purple">jkt</span>).</div>
+          </li>
+          <li>
+            <span class="bullet b-purple"></span>
+            <div><strong>Cryptographic Token Minting</strong>: Bakes <span class="code-tag tag-purple">cnf.jkt</span> claim directly into the access token payload.</div>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- FLOW 2 BANNER -->
+    <div class="flow-banner flow-2">
+      <div style="flex: 1;">
+        <div class="flow-header">
+          <span class="fh-2">2. Automated Financial Operations (e.g. Bulk Payroll Settlement)</span>
+          <span class="code-tag tag-green">SEPA Instant / ISO 20022</span>
+        </div>
+        <div style="color: #cbd5e1; font-size: 11px;">
+          • <strong>Target Route</strong>: <span class="code-tag">POST /b2b-api/payroll/execute-batch</span><br>
+          • <strong>Headers</strong>: <span class="code-tag tag-green">Authorization: DPoP &lt;access_token&gt;</span> (Bearer forbidden) &nbsp;|&nbsp; <span class="code-tag">DPoP: &lt;proof&gt;</span>
+        </div>
+      </div>
+      <div style="margin-left: 20px; padding-left: 16px; border-left: 1px solid rgba(255,255,255,0.1); font-size: 11px; color: #94a3b8;">
+        <div>Proof Claims:</div>
+        <div style="margin-top: 3px;">
+          <span class="code-tag tag-green">ath: sha256(token)</span>
+          <span class="code-tag">htm: POST</span>
+          <span class="code-tag tag-amber">nonce</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARD 3: BANK RESOURCE SERVER (WHOLESALE GATEWAY) -->
+    <div class="card card-bank">
+      <div class="card-header">
+        <div class="icon-box ib-green">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="21" x2="21" y2="21"></line><line x1="3" y1="10" x2="21" y2="10"></line><polyline points="5 6 12 3 19 6"></polyline><line x1="4" y1="10" x2="4" y2="21"></line><line x1="20" y1="10" x2="20" y2="21"></line><line x1="8" y1="14" x2="8" y2="17"></line><line x1="12" y1="14" x2="12" y2="17"></line><line x1="16" y1="14" x2="16" y2="17"></line></svg>
+        </div>
+        <div>
+          <div class="card-title">Wholesale Bank B2B Gateway (Resource Server)</div>
+          <div class="card-subtitle">Zero-Trust High-Value Transaction API • Full 7-Point Cryptographic Enforcement</div>
+        </div>
+      </div>
+      <div class="bank-layout">
+        <div class="bank-col">
+          <div class="bank-col-title">
+            <span>⚙️</span> Automated B2B Services
+          </div>
+          <ul class="spec-list" style="margin-top: 4px;">
+            <li><span class="bullet b-green"></span><div><strong>Bulk Payroll Batch</strong>: <span class="code-tag">POST /payroll/execute-batch</span></div></li>
+            <li><span class="bullet b-green"></span><div><strong>Treasury Positions</strong>: <span class="code-tag">GET /treasury/positions</span></div></li>
+            <li><span class="bullet b-green"></span><div><strong>Institutional FX Rates</strong>: <span class="code-tag">GET /fx/quote</span></div></li>
+          </ul>
+        </div>
+
+        <div class="bank-col">
+          <div class="bank-col-title">
+            <span>🔒</span> 7-Point Security Verification
+          </div>
+          <ul class="spec-list" style="margin-top: 4px;">
+            <li><span class="bullet b-green"></span><div>Scheme is strictly <span class="code-tag tag-green">DPoP &lt;token&gt;</span></div></li>
+            <li><span class="bullet b-green"></span><div>Presenter <span class="code-tag tag-purple">thumbprint == cnf.jkt</span></div></li>
+            <li><span class="bullet b-green"></span><div>Token hash matches <span class="code-tag tag-green">ath</span> claim</div></li>
+            <li><span class="bullet b-green"></span><div>Proof bound to exact method & URI (<span class="code-tag">htm/htu</span>)</div></li>
+            <li><span class="bullet b-green"></span><div>Anti-replay nonce & <span class="code-tag">jti</span> verification</div></li>
+          </ul>
+        </div>
+
+        <div class="bank-col">
+          <div class="bank-col-title" style="color: #f87171;">
+            <span>🛡️</span> Blocked Threat Vectors
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 4px;">
+            <div class="threat-tag">❌ Stolen Token via APM/Logs → Bearer Prohibited (401)</div>
+            <div class="threat-tag">❌ Rogue Presenter Key → Thumbprint Mismatch (401)</div>
+            <div class="threat-tag">❌ Stale / Replayed Proof → Nonce Challenge (400)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

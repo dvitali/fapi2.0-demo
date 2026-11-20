@@ -1,0 +1,18 @@
+meta {
+  name: 02 - Auth Server Public JWKS
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/oauth/jwks.json
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.keys: isDefined
+  res.body.keys[0].kty: eq EC
+  res.body.keys[0].alg: eq ES256
+}

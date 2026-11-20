@@ -1,0 +1,19 @@
+docs {
+  # FAPI 2.0 Server-to-Server (M2M) Collection
+
+  This Bruno collection demonstrates end-to-end Financial-grade API (FAPI 2.0) Machine-to-Machine security:
+  - **Client Authentication**: `private_key_jwt` (RFC 7523) embedding an X.509 EC client certificate in the JWT header (`x5c`, RFC 7515 §4.1.6).
+  - **Sender-Constraining**: Demonstrating Proof-of-Possession at the Application Layer (DPoP, RFC 9449) with `cnf.jkt` thumbprint binding.
+  - **Cryptographic Standard**: Strict ES256 (ECDSA P-256 + SHA-256) using IEEE P1363 signature encoding.
+
+  ## Environment Variables Reference (`environments/Local.bru`)
+  | Variable | Type | Description |
+  | :--- | :--- | :--- |
+  | `baseUrl` | URL | Identity Provider and Resource Server URL (`http://localhost:3001`) |
+  | `clientId` | String | Registered B2B Client ID (`erp-acme-corp-bruno`) |
+  | `clientCertificatePem` | PEM Certificate | Plain X.509 EC client certificate embedded into `x5c` assertion header |
+  | `clientPrivateKeyPem` | PEM Private Key | Plain EC P-256 private key used to sign `client_assertion` |
+  | `dpopPrivateKeyPem` | PEM Private Key | Plain EC P-256 private key used to sign DPoP proof JWTs |
+  | `dpopPublicKeyJwk` | JSON / JWK | Public JWK coordinates (`x`, `y`) embedded in DPoP header |
+  | `accessToken` | Secret Variable | Dynamic DPoP-bound access token saved by Step 03 post-response script |
+}

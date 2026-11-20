@@ -1,0 +1,28 @@
+{
+  "name": "fapi-server-to-server",
+  "version": "1.0.0",
+  "description": "Financial-grade API (FAPI 2.0) Server-to-Server (M2M) Security Profile Showcase",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test.js",
+    "test:s2s": "node test.js"
+  },
+  "keywords": [
+    "fapi",
+    "fapi2",
+    "oauth2",
+    "dpop",
+    "private_key_jwt",
+    "m2m",
+    "server-to-server",
+    "banking-api",
+    "open-banking"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

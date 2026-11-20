@@ -1,0 +1,56 @@
+meta {
+  name: 08 - Threat 2 - Rogue DPoP Key (Expect 401)
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/b2b-api/treasury/positions
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: DPoP {{accessToken}}
+  DPoP: {{rogueProof}}
+}
+
+script:pre-request {
+  const token = bru.getEnvVar('accessToken');
+  // We simulate an attacker by creating a brand new unauthorized EC keypair using node:crypto
+  const crypto = require('crypto');
+  const { publicKey, privateKey } = crypto.generateKeyPairSync('ec', { namedCurve: 'prime256v1' });
+  const pubJwk = publicKey.export({ format: 'jwk' });
+
+  function b64url(input) {
+    if (Buffer.isBuffer(input)) return input.toString('base64url');
+    const str = typeof input === 'string' ? input : JSON.stringify(input);
+    return Buffer.from(str, 'utf8').toString('base64url');
+  }
+
+  const h = b64url({
+    typ: 'dpop+jwt',
+    alg: 'ES256',
+    jwk: { kty: 'EC', crv: 'P-256', x: pubJwk.x, y: pubJwk.y }
+  });
+
+  const p = b64url({
+    jti: crypto.randomUUID(),
+    htm: 'GET',
+    htu: bru.getEnvVar('baseUrl') + '/b2b-api/treasury/positions',
+    iat: Math.floor(Date.now() / 1000),
+    ath: crypto.createHash('sha256').update(token).digest('base64url')
+  });
+
+  const signingInput = h + '.' + p;
+  const sig = crypto.sign('SHA256', Buffer.from(signingInput), { key: privateKey, dsaEncoding: 'ieee-p1363' });
+  const rogueProof = signingInput + '.' + b64url(sig);
+
+  bru.setVar('rogueProof', rogueProof);
+}
+
+assert {
+  res.status: eq 401
+  res.body.error: eq unauthorized
+  res.body.message: contains SENDER-CONSTRAINT VIOLATION
+}

@@ -1,0 +1,18 @@
+meta {
+  name: 01 - Auth Server Discovery
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/.well-known/openid-configuration
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.token_endpoint: isDefined
+  res.body.grant_types_supported: contains client_credentials
+  res.body.dpop_signing_alg_values_supported: contains ES256
+}

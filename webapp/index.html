@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FAPI 2.0 Server-to-Server (M2M) Showcase</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand-group">
+        <div class="badge-fapi">M2M / S2S</div>
+        <div>
+          <h1>Financial-grade API: Server-to-Server Showcase</h1>
+          <p class="subtitle">Zero User Interaction • Client Credentials (RFC 6749 §4.4) • private_key_jwt (RFC 7523) • DPoP (RFC 9449)</p>
+        </div>
+      </div>
+      <div class="status-badges">
+        <span class="status-pill active"><span class="dot"></span> AS Token Endpoint</span>
+        <span class="status-pill active"><span class="dot"></span> B2B Wholesale Gateway</span>
+        <span class="status-pill active"><span class="dot"></span> ERP Backend Client</span>
+        <button id="btnResetKeys" class="btn btn-secondary btn-sm" title="Regenerate keys">🔄 Reset Keys</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-layout">
+    <!-- Architecture Bar -->
+    <section class="card arch-bar">
+      <div class="arch-node">
+        <div class="node-icon">🖥️</div>
+        <div class="node-content">
+          <div class="node-title">Corporate ERP Backend</div>
+          <div class="node-desc">Acme Corp Automated System (Client ID: erp-acme-corp-001)</div>
+        </div>
+      </div>
+      <div class="arch-arrow">
+        <span class="arrow-label">1. private_key_jwt + DPoP</span>
+        <div class="arrow-line"></div>
+      </div>
+      <div class="arch-node">
+        <div class="node-icon">🏛️</div>
+        <div class="node-content">
+          <div class="node-title">Corporate AS (IdP)</div>
+          <div class="node-desc">client_credentials Grant (No User Login)</div>
+        </div>
+      </div>
+      <div class="arch-arrow">
+        <span class="arrow-label">2. DPoP Bound S2S Call</span>
+        <div class="arrow-line"></div>
+      </div>
+      <div class="arch-node highlight">
+        <div class="node-icon">🏦</div>
+        <div class="node-content">
+          <div class="node-title">B2B Wholesale Bank API</div>
+          <div class="node-desc">Treasury, Bulk Payroll & FX</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs">
+      <button class="tab-btn active" data-tab="workflow">🤖 Automated M2M Workflow</button>
+      <button class="tab-btn" data-tab="attacks">🛡️ S2S Threat & Attack Simulator</button>
+      <button class="tab-btn" data-tab="keys">🔑 Cryptographic Keys</button>
+      <button class="tab-btn" data-tab="concepts">📖 FAPI in Server-to-Server</button>
+    </nav>
+
+    <!-- TAB 1: AUTOMATED WORKFLOW -->
+    <div id="tab-workflow" class="tab-content active">
+      <div class="grid-2">
+        <!-- Stage 1: Token Acquisition -->
+        <div class="card">
+          <div class="panel-header">
+            <div>
+              <span class="badge badge-primary">Stage 1</span>
+              <h2>M2M Token Acquisition</h2>
+              <p class="panel-desc">
+                Machine-to-machine authentication without human interaction. Uses <code>grant_type=client_credentials</code> with <code>private_key_jwt</code> and a client-signed <code>DPoP</code> proof.
+              </p>
+            </div>
+          </div>
+
+          <div class="option-box">
+            <label class="checkbox-label">
+              <input type="checkbox" id="chkEnforceAsNonce">
+              <span><strong>Enforce DPoP Nonce Challenge (RFC 9449 §8)</strong>: Server returns HTTP 400 <code>use_dpop_nonce</code>; client auto-retries with fresh nonce.</span>
+            </label>
+          </div>
+
+          <div style="margin-top: 1rem;">
+            <button id="btnAcquireToken" class="btn btn-primary btn-full">⚡ Execute Automated Token Exchange</button>
+          </div>
+
+          <div id="tokenOutput" class="output-container" style="display: none; margin-top: 1.25rem;">
+            <div id="tokenNonceAlert" class="alert alert-info" style="display: none; margin-bottom: 0.75rem;">
+              <strong>🔄 DPoP Nonce Negotiated:</strong> Authorization Server challenged the client with a <code>DPoP-Nonce</code>. The client seamlessly generated a new proof and completed the handshake.
+            </div>
+            <div class="inspect-field">
+              <label>Client's DPoP Key Thumbprint (jkt):</label>
+              <code class="code-value highlight-val" id="tClientJkt"></code>
+            </div>
+            <div class="inspect-field">
+              <label>Issued Access Token (Decoded Payload):</label>
+              <pre class="code-block" id="tTokenPayload"></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stage 2: B2B Business Operations -->
+        <div class="card">
+          <div class="panel-header">
+            <div>
+              <span class="badge badge-success">Stage 2</span>
+              <h2>Automated B2B Financial Operations</h2>
+              <p class="panel-desc">
+                The ERP service invokes protected corporate banking endpoints. Each request carries <code>Authorization: DPoP &lt;token&gt;</code> and a fresh <code>DPoP</code> proof containing the HTTP method, URL, and <code>ath</code> (access token hash).
+              </p>
+            </div>
+          </div>
+
+          <div class="option-box">
+            <label class="checkbox-label">
+              <input type="checkbox" id="chkEnforceRsNonce">
+              <span><strong>Enforce Resource Nonce Challenge</strong>: Bank challenges sensitive operations with a resource nonce.</span>
+            </label>
+          </div>
+
+          <div class="btn-group" style="margin-top: 1rem;">
+            <button id="btnCallTreasury" class="btn btn-primary">📈 Treasury Liquidity</button>
+            <button id="btnCallPayroll" class="btn btn-secondary">💼 Execute Bulk Payroll</button>
+            <button id="btnCallFx" class="btn btn-secondary">💱 Wholesale FX Quote</button>
+          </div>
+
+          <div id="b2bOutput" class="output-container" style="display: none; margin-top: 1.25rem;">
+            <div id="rsNonceAlert" class="alert alert-info" style="display: none; margin-bottom: 0.75rem;">
+              <strong>🔄 Resource Nonce Handshake:</strong> Bank challenged the request with a fresh resource nonce. ERP client auto-signed and retried within milliseconds.
+            </div>
+            <div class="inspect-field">
+              <label>Bank Security Audit Trail (7 / 7 Checks):</label>
+              <div class="audit-checklist" id="b2bAuditChecklist"></div>
+            </div>
+            <div class="inspect-field" style="margin-top: 1rem;">
+              <label>Bank Response Data:</label>
+              <div id="b2bDataDisplay" class="bank-accounts-container"></div>
+              <pre class="code-block" id="b2bRawData" style="margin-top: 0.5rem;"></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: ATTACK SIMULATOR -->
+    <div id="tab-attacks" class="tab-content" style="display: none;">
+      <div class="card">
+        <div class="panel-header">
+          <div>
+            <span class="badge badge-danger">S2S Threat Sandbox</span>
+            <h2>Server-to-Server Security Threats & FAPI Defenses</h2>
+            <p class="panel-desc">
+              Server-to-server tokens typically carry high financial privileges (such as treasury sweeps, bulk payroll, or direct debit authority).
+              If an attacker leaks or exfiltrates an M2M token, standard OAuth 2.0 Bearer tokens leave the entire bank account vulnerable.
+              See how FAPI 2.0 prevents disaster:
+            </p>
+          </div>
+        </div>
+
+        <div class="grid-3">
+          <!-- Threat 1 -->
+          <div class="attack-card">
+            <div class="attack-header">
+              <span class="attack-icon">🖨️</span>
+              <div>
+                <h4>Threat 1: Token Leaked in Server Logs / APM</h4>
+                <p>An engineer accidentally prints the access token to Datadog or ELK. Hacker extracts it and replays with <code>Authorization: Bearer</code>.</p>
+              </div>
+            </div>
+            <div class="attack-body">
+              <button class="btn btn-danger btn-sm" id="btnAttackBearer">Simulate Leaked Token Replay</button>
+            </div>
+          </div>
+
+          <!-- Threat 2 -->
+          <div class="attack-card">
+            <div class="attack-header">
+              <span class="attack-icon">👾</span>
+              <div>
+                <h4>Threat 2: Rogue Service with Own Key</h4>
+                <p>A compromised microservice in the cloud gets the stolen token and crafts its own DPoP proof using its own EC key.</p>
+              </div>
+            </div>
+            <div class="attack-body">
+              <button class="btn btn-danger btn-sm" id="btnAttackRogue">Simulate Rogue Service Attack</button>
+            </div>
+          </div>
+
+          <!-- Threat 3 -->
+          <div class="attack-card">
+            <div class="attack-header">
+              <span class="attack-icon">⏳</span>
+              <div>
+                <h4>Threat 3: Stale / Pre-computed Proof</h4>
+                <p>Attacker attempts to replay a captured proof or use a pre-computed signature against a nonce-protected endpoint.</p>
+              </div>
+            </div>
+            <div class="attack-body">
+              <button class="btn btn-danger btn-sm" id="btnAttackNonce">Simulate Stale Nonce Attack</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Attack Result Box -->
+        <div id="attackResultBox" class="attack-result-box" style="display: none; margin-top: 1.5rem;">
+          <div class="result-header">
+            <h3 id="attackResultTitle"></h3>
+            <span id="attackResultBadge" class="badge"></span>
+          </div>
+          <div class="result-explanation" id="attackResultExplanation"></div>
+          <pre class="code-block" id="attackResultDetails"></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: KEYS -->
+    <div id="tab-keys" class="tab-content" style="display: none;">
+      <div class="card">
+        <div class="panel-header">
+          <div>
+            <span class="badge badge-info">Cryptography</span>
+            <h2>Active M2M Cryptographic Keys (ES256)</h2>
+            <p class="panel-desc">All keys are generated using standard NIST P-256 curves. Notice there are <strong>zero shared secrets</strong>.</p>
+          </div>
+        </div>
+        <div class="grid-2" id="keysContainer"></div>
+      </div>
+    </div>
+
+    <!-- TAB 4: CONCEPTS -->
+    <div id="tab-concepts" class="tab-content" style="display: none;">
+      <div class="card">
+        <div class="panel-header">
+          <div>
+            <span class="badge badge-primary">Technical Reference</span>
+            <h2>Why FAPI for Server-to-Server (M2M)?</h2>
+          </div>
+        </div>
+
+        <div class="article-body">
+          <h3>1. Why Not Just Use Traditional Client Credentials?</h3>
+          <p>
+            In RFC 6749, the Client Credentials grant traditionally relies on a <code>client_id</code> and a static <code>client_secret</code>.
+            Once authenticated, the Authorization Server returns a standard <strong>Bearer</strong> access token.
+          </p>
+          <p>
+            In high-value corporate banking (Corporate Treasury, Automated Clearing House, SWIFT messaging, Regulatory Reporting), this creates severe systemic risks:
+          </p>
+          <ul>
+            <li><strong>Shared Secret Vulnerability</strong>: Both the client and the AS must store the secret. If either side or transit is compromised, the secret leaks.</li>
+            <li><strong>Bearer Token Exfiltration</strong>: S2S tokens often have 10-60 minute lifetimes and broad privileges. If an attacker dumps server memory, intercepts traffic via SSRF, or reads application logs, they can drain accounts from any machine in the world.</li>
+            <li><strong>No Cryptographic Non-Repudiation</strong>: Shared secrets cannot prove which party created an assertion.</li>
+          </ul>
+
+          <h3 style="margin-top: 1.5rem;">2. The FAPI 2.0 Solution for M2M</h3>
+          <table class="comparison-table" style="margin-top: 1rem;">
+            <thead>
+              <tr>
+                <th>Aspect</th>
+                <th>Standard OAuth 2.0 M2M</th>
+                <th>FAPI 2.0 M2M Profile</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Authentication</strong></td>
+                <td>Shared <code>client_secret</code></td>
+                <td><span class="badge badge-success">Asymmetric private_key_jwt (RFC 7523)</span></td>
+              </tr>
+              <tr>
+                <td><strong>Token Type</strong></td>
+                <td>Bearer (Unconstrained)</td>
+                <td><span class="badge badge-success">Sender-Constrained via DPoP (RFC 9449)</span></td>
+              </tr>
+              <tr>
+                <td><strong>Access Token Binding</strong></td>
+                <td>None</td>
+                <td><span class="badge badge-success">cnf.jkt (RFC 7638 Key Thumbprint)</span></td>
+              </tr>
+              <tr>
+                <td><strong>Freshness & Replay</strong></td>
+                <td>Token expiration only</td>
+                <td><span class="badge badge-success">DPoP JTI Anti-Replay + DPoP-Nonce</span></td>
+              </tr>
+              <tr>
+                <td><strong>Human User Needed?</strong></td>
+                <td>No</td>
+                <td><span class="badge badge-info">No (Zero User Interaction)</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="app-footer">
+    <p>FAPI 2.0 Server-to-Server (M2M) Interactive Demo • Port 3001 • Pure Node.js Web Cryptography</p>
+  </footer>
+
+  <script src="/app.js"></script>
+</body>
+</html>

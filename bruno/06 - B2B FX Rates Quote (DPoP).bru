@@ -1,0 +1,77 @@
+meta {
+  name: 06 - B2B FX Rates Quote (DPoP)
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/b2b-api/fx/quote?pair=EUR/USD&amount=2500000
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: DPoP {{accessToken}}
+  DPoP: {{dpopProof}}
+}
+
+script:pre-request {
+  const crypto = require('crypto');
+
+  // 1. Read PLAIN DPoP Private Key and Public JWK
+  const rawDpopPem = bru.getEnvVar('dpopPrivateKeyPem');
+  const rawDpopJwk = bru.getEnvVar('dpopPublicKeyJwk');
+
+  const dpopPrivateKeyPem = rawDpopPem.replace(/\\n/g, '\n');
+  const dpopPublicKeyJwk = typeof rawDpopJwk === 'string' ? JSON.parse(rawDpopJwk) : rawDpopJwk;
+
+  // 2. Base64URL encoding helper
+  function base64url(input) {
+    if (Buffer.isBuffer(input)) {
+      return input.toString('base64url');
+    }
+    const str = typeof input === 'string' ? input : JSON.stringify(input);
+    return Buffer.from(str, 'utf8').toString('base64url');
+  }
+
+  const token = bru.getEnvVar('accessToken');
+  const targetUrl = bru.getEnvVar('baseUrl') + '/b2b-api/fx/quote';
+  const now = Math.floor(Date.now() / 1000);
+
+  // 3. Compute Access Token Hash (ath): SHA-256 base64url(accessToken)
+  const ath = crypto.createHash('sha256').update(token).digest('base64url');
+
+  // 4. Create and sign DPoP proof bound to this GET request and access token
+  const encHeader = base64url({
+    typ: 'dpop+jwt',
+    alg: 'ES256',
+    jwk: {
+      kty: 'EC',
+      crv: 'P-256',
+      x: dpopPublicKeyJwk.x,
+      y: dpopPublicKeyJwk.y
+    }
+  });
+
+  const encPayload = base64url({
+    jti: crypto.randomUUID(),
+    htm: 'GET',
+    htu: targetUrl,
+    iat: now,
+    ath: ath
+  });
+
+  const signingInput = encHeader + '.' + encPayload;
+  const signature = crypto.sign('SHA256', Buffer.from(signingInput), {
+    key: dpopPrivateKeyPem,
+    dsaEncoding: 'ieee-p1363'
+  });
+
+  bru.setVar('dpopProof', signingInput + '.' + base64url(signature));
+}
+
+assert {
+  res.status: eq 200
+  res.body.status: eq success
+  res.body.quote.pair: eq EUR/USD
+}

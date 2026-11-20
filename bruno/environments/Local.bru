@@ -1,0 +1,17 @@
+vars {
+  @description('Base URL of the FAPI 2.0 Authorization Server and B2B Banking Resource Server (default: http://localhost:3001)')
+  baseUrl: http://localhost:3001
+  @description('OAuth 2.0 client_id registered with the Authorization Server for M2M B2B interactions')
+  clientId: erp-acme-corp-bruno
+  @description('Plain X.509 EC client SSL certificate (PEM format). Embedded by pre-request script in client_assertion header (RFC 7515 x5c)')
+  clientCertificatePem: -----BEGIN CERTIFICATE-----\nMIIB+DCCAZ+gAwIBAgIUPn/smvl425i/KHR9VhhB7Y+wR9UwCgYIKoZIzj0EAwIw\nUjEcMBoGA1UEAwwTZXJwLWFjbWUtY29ycC1icnVubzESMBAGA1UECgwJQWNtZSBD\nb3JwMREwDwYDVQQLDAhUcmVhc3VyeTELMAkGA1UEBhMCSVQwHhcNMjYxMTE3MDkz\nMTU3WhcNMjcxMTE3MDkzMTU3WjBSMRwwGgYDVQQDDBNlcnAtYWNtZS1jb3JwLWJy\ndW5vMRIwEAYDVQQKDAlBY21lIENvcnAxETAPBgNVBAsMCFRyZWFzdXJ5MQswCQYD\nVQQGEwJJVDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABJ/tFnrg171EYdZ4wFt6\nDIdSOdDnCaaqy2cW/ecj9AFY9gbiZd7YdVAFjyA0xKqkekniiRbKacXyuCHdlZQg\nYPOjUzBRMB0GA1UdDgQWBBTtkCzM48Mntg+ckQHlDTNQbSOz/zAfBgNVHSMEGDAW\ngBTtkCzM48Mntg+ckQHlDTNQbSOz/zAPBgNVHRMBAf8EBTADAQH/MAoGCCqGSM49\nBAMCA0cAMEQCIHb9VULBUyAiB3rmjp/9zSjD117PCenxU4iJcXANPckMAiB97HCb\n4m3UB1JZ0E2tV20K9uhFbifAqHRibijNi29zyA==\n-----END CERTIFICATE-----\n
+  @description('Plain EC P-256 private key (PKCS#8 PEM format) corresponding to the client certificate. Used to sign client_assertion (private_key_jwt / RFC 7523)')
+  clientPrivateKeyPem: -----BEGIN PRIVATE KEY-----\nMIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgdBoVKBUujekMFDL4\n9GxACYi+fYAkGTrGEXKPY7jzXoKhRANCAASf7RZ64Ne9RGHWeMBbegyHUjnQ5wmm\nqstnFv3nI/QBWPYG4mXe2HVQBY8gNMSqpHpJ4okWymnF8rgh3ZWUIGDz\n-----END PRIVATE KEY-----\n
+  @description('Plain EC P-256 private key (PKCS#8 PEM format) used to sign DPoP proof-of-possession JWTs (RFC 9449)')
+  dpopPrivateKeyPem: -----BEGIN PRIVATE KEY-----\nMIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg4jYSPztv57FZwD5k\nciVKvCHk4fvmLzBSayk9OhZpFzGhRANCAARczOYVXYwRW99hkVH81EiS7SHt1YeF\n6WfhMbVsf3ZhO58Ose5ech10ALFW54LyQR0YspgcEM1Hajc7K6KDjeVc\n-----END PRIVATE KEY-----\n
+  @description('Public JWK coordinates (x, y) for the DPoP keypair. Embedded in DPoP header jwk claim to bind access token (cnf.jkt)')
+  dpopPublicKeyJwk: {"kty":"EC","x":"XMzmFV2MEVvfYZFR_NRIku0h7dWHheln4TG1bH92YTs","y":"nw6x7l5yHXQAsVbngvJBHRiymBwQzUdqNzsrooON5Vw","crv":"P-256"}
+}
+vars:secret [
+  accessToken
+]
