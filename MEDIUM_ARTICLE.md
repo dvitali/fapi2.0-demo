@@ -62,19 +62,13 @@ While standard OAuth 2.0 / RFC 7523 allows clients to authenticate using raw pub
 
 To solve this, enterprise banking best practice (and regulatory frameworks like **eIDAS** and **PSD2/PSD3**) combines RFC 7523 with an **X.509 Qualified Electronic Seal Certificate (QSealC)** via the **`x5c` JWS header (RFC 7515 §4.1.6)**:
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│               The 'x5c' Header Application-Layer Trust                 │
-├────────────────────────────────────────────────────────────────────────┤
-│  1. Corporate ERP signs client_assertion JWT with its QSealC key.      │
-│  2. ERP embeds the certificate chain in the JWT header:                │
-│     { "alg": "ES256", "typ": "JWT", "x5c": ["<base64-der-cert>", ...] }│
-│  3. Bank AS extracts public key dynamically from x5c.                  │
-│  4. Bank validates trust chain against EU Qualified Trust List (QTSP). │
-│  5. Bank verifies revocation in real time via OCSP/CRL.                │
-│  6. Instant onboarding: Zero manual key exchange required out-of-band! │
-└────────────────────────────────────────────────────────────────────────┘
-```
+1. **Corporate ERP signs client_assertion JWT with its QSealC key**.
+2. **ERP embeds the certificate chain in the JWT header**:
+   `{ "alg": "ES256", "typ": "JWT", "x5c": ["<base64-der-cert>", ...] }`
+3. **Bank AS extracts public key dynamically from x5c**.
+4. **Bank validates trust chain against EU Qualified Trust List (QTSP)**.
+5. **Bank verifies revocation in real time via OCSP/CRL**.
+6. **Instant onboarding: Zero manual key exchange required out-of-band!**
 
 By leveraging `x5c`, the corporate client proves its legal identity and achieves non-repudiation (under **eIDAS Article 35**) directly at Layer 7. Meanwhile, **DPoP** uses lightweight, ephemeral session keys to protect the access token itself.
 
