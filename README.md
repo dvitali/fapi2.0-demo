@@ -56,8 +56,6 @@ The **Financial-Grade API 2.0 (FAPI 2.0)** Security Profile by the OpenID Founda
 
 To see FAPI 2.0 M2M in action, I built a zero-dependency reference implementation containing a complete Authorization Server, Wholesale Bank Gateway, automated ERP client, and a pre-configured **Bruno API collection**.
 
-* **GitHub Repository**: [`https://github.com/your-username/fapi-server-to-server`](https://github.com/your-username/fapi-server-to-server) *(Replace with your repository URL)*
-
 If you are not hands-on or you have not time go directly [here](#step-3-m2m-token-exchange-post-oauthtoken) to see the flow described step by step.
 
 ### Quick Start: Launching the Demo
@@ -66,7 +64,7 @@ Clone the repository and start the server:
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/fapi-server-to-server.git
+git clone https://github.com/dvitali/fapi2.0-demo.git
 cd fapi-server-to-server
 
 # Run the automated test suite (Zero external dependencies, 100% native Node.js)
