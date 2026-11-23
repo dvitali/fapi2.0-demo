@@ -1,6 +1,6 @@
 # Beyond mTLS: Why FAPI 2.0 and DPoP Are the Future of Corporate Open Banking
 
-> *Moving enterprise B2B banking security from fragile transport pipes (mTLS) to resilient application-layer cryptography using RFC 7523, RFC 9449, and the OpenID FAPI 2.0 Security Profile.*
+> *Moving enterprise B2B banking security from traditional transport pipes (mTLS) to application-layer cryptography using RFC 7523, RFC 9449, and the OpenID FAPI 2.0 Security Profile.*
 
 ---
 
@@ -36,25 +36,49 @@ Historically, enterprises simplified certificate management by deploying certifi
 
 Under recent **CA/Browser Forum Baseline Requirements**, public Certificate Authorities (CAs) are prohibited from issuing dual-EKU certificates. Furthermore, public certificate validity is being aggressively shortened (moving toward 90–100 day lifecycles). Organizations are forced to maintain separate, complex PKI pipelines, significantly increasing certificate rotation overhead and the risk of costly production outages.
 
-### C. Edge Protection & CDN Limitations
-Major WAFs and CDNs either charge exorbitant enterprise fees or restrict end-to-end mTLS client renegotiation, forcing banks to either compromise on edge DDoS protection or build complex network topologies.
-
 ---
 
 ## 3. Enter FAPI 2.0: Moving Cryptography to the Application Layer
 
-The **Financial-Grade API (FAPI 2.0)** Security Profile by the OpenID Foundation resolves this architectural dilemma. Instead of tethering security to the network transport pipe (Layer 4/TLS), FAPI 2.0 lifts authentication and sender-constraining directly into the **Application Layer (Layer 7)**.
+The [**Financial-Grade API (FAPI 2.0)**](https://openid.net/specs/fapi-security-profile-2_0-final.html) Security Profile by the OpenID Foundation resolves this architectural dilemma. Instead of tethering security to the network transport pipe (Layer 4/TLS), FAPI 2.0 lifts authentication and sender-constraining directly into the **Application Layer (Layer 7)**.
 
 ![FAPI 2.0 Server-to-Server Architecture](img/architecture.png)
 
 ### The Three Core Pillars of FAPI 2.0 M2M:
 
 1. **RFC 7523 (`private_key_jwt`) Client Authentication**:
-   Shared client secrets are eliminated. The ERP authenticates at `/oauth/token` by digitally signing a JWT assertion with its private EC key (`ES256`). The bank validates this signature using the client's public JWKS or X.509 certificate embedded in the `x5c` header. No secrets ever cross the wire.
+   Shared client secrets are completely eliminated. The ERP authenticates at `/oauth/token` by digitally signing an assertion JWT with its private Elliptic Curve key (`ES256`).
 2. **RFC 9449 (DPoP — Demonstrating Proof-of-Possession)**:
    Access tokens are sender-constrained rather than Bearer tokens. When requesting a token, the client presents an ephemeral DPoP public key. The Authorization Server binds the SHA-256 thumbprint of that key into the token's payload (`cnf: { jkt: "<thumbprint>" }`). On every API call, the client generates a fresh DPoP proof. The bank verifies that the presenter holds the private key matching `cnf.jkt` and checks the Access Token Hash (`ath`). Even if exfiltrated, **the token is completely useless to an attacker**.
 3. **RFC 9449 (§8) DPoP Nonce Negotiation**:
    The bank gateway can challenge requests with an `HTTP 400 use_dpop_nonce` error. The client immediately refreshes its proof with the server-supplied nonce, preventing offline pre-computed signatures and replay attacks.
+
+### Enterprise Best Practice: Why Banking Mandates QSealC Over Out-of-Band Keys
+
+While standard OAuth 2.0 / RFC 7523 allows clients to authenticate using raw public keys pre-registered out-of-band (e.g., uploading JWKS files between administrators), **in enterprise wholesale banking, manual out-of-band key exchange is an operational and governance anti-pattern**:
+* **Scalability Bottleneck**: Banks cannot securely manage, exchange, and rotate raw public keys with thousands of corporate clients through ad-hoc manual channels.
+* **Lack of Centralized Revocation**: If a corporate private key is compromised, static JWKS registrations lack automated revocation pipelines (like CRLs or OCSP).
+* **Zero Legal Non-Repudiation**: A raw cryptographic keypair proves possession of math, but legally fails to prove the regulatory corporate identity of the entity executing a €10,000,000 payroll batch.
+
+To solve this, enterprise banking best practice (and regulatory frameworks like **eIDAS** and **PSD2/PSD3**) combines RFC 7523 with an **X.509 Qualified Electronic Seal Certificate (QSealC)** via the **`x5c` JWS header (RFC 7515 §4.1.6)**:
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│               The 'x5c' Header Application-Layer Trust                 │
+├────────────────────────────────────────────────────────────────────────┤
+│  1. Corporate ERP signs client_assertion JWT with its QSealC key.      │
+│  2. ERP embeds the certificate chain in the JWT header:                │
+│     { "alg": "ES256", "typ": "JWT", "x5c": ["<base64-der-cert>", ...] }│
+│  3. Bank AS extracts public key dynamically from x5c.                  │
+│  4. Bank validates trust chain against EU Qualified Trust List (QTSP). │
+│  5. Bank verifies revocation in real time via OCSP/CRL.                │
+│  6. Instant onboarding: Zero manual key exchange required out-of-band! │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+By leveraging `x5c`, the corporate client proves its legal identity and achieves non-repudiation (under **eIDAS Article 35**) directly at Layer 7. Meanwhile, **DPoP** uses lightweight, ephemeral session keys to protect the access token itself.
+
+*(This fundamental distinction between legal corporate identity certificates and technical session keys is detailed in Chapter 6).*
 
 ---
 
